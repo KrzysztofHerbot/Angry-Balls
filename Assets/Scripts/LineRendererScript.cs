@@ -6,7 +6,7 @@ public class LineRendererScript : MonoBehaviour
 {
     private LineRenderer lr;
     private Transform[] pivotPoints;
-    void Start()
+    void Awake()
     {
         lr = GetComponent<LineRenderer>();
         //SetUpLine(pivotPoints);
@@ -21,6 +21,7 @@ public class LineRendererScript : MonoBehaviour
 
     private void Update()
     {
+        if (pivotPoints == null) { return; }
         for(int i=0;i<pivotPoints.Length;i++)
         {
             lr.SetPosition(i, pivotPoints[i].position);

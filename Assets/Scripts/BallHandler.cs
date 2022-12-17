@@ -20,9 +20,13 @@ public class BallHandler : MonoBehaviour
     private Camera mainCamera;
     private bool isDragging = false;
 
-    void Start()
+    private void Awake()
     {
         mainCamera = Camera.main;
+    }
+
+    void Start()
+    {
         SpawnNewBall();
     }
 
@@ -54,11 +58,21 @@ public class BallHandler : MonoBehaviour
         Vector2 touchPosition = Touchscreen.current.primaryTouch.position.ReadValue();
         Vector3 worldPosition = mainCamera.ScreenToWorldPoint(touchPosition);
 
-        currentBallRb.position = worldPosition;
-        
 
-        Debug.Log("Touch position: " + touchPosition);
-        Debug.Log("World position: " + worldPosition);
+        //clamps values around the slingshot
+
+        Vector2 maxLeft = new Vector2(pivot.position.x - clampValue, pivot.position.y); // coordinates of max left point
+        float angle = Vector3.Angle(maxLeft - pivot.position, new Vector2(worldPosition.x,worldPosition.y) - pivot.position); //angle between horizontal line and clickPoint
+
+        //calculates clmap points on a circle based on an angle between horizontal line and clickPoint
+        float ClampX = Mathf.Clamp(worldPosition.x, pivot.position.x - Mathf.Abs(Mathf.Cos(angle * Mathf.PI / 180)) * clampValue, pivot.position.x + Mathf.Abs(Mathf.Cos(angle * Mathf.PI / 180)) * clampValue);
+        float ClampY = Mathf.Clamp(worldPosition.y, pivot.position.y - Mathf.Abs(Mathf.Sin(angle * Mathf.PI / 180)) * clampValue, pivot.position.y + Mathf.Abs(Mathf.Sin(angle * Mathf.PI / 180)) * clampValue);
+
+        //float ClampX = Mathf.Clamp(worldPosition.x, pivot.position.x - clampValue, pivot.position.x + clampValue);
+        //float ClampY = Mathf.Clamp(worldPosition.y, pivot.position.y - clampValue, pivot.position.y + clampValue);
+
+        currentBallRb.position = new Vector3(ClampX, ClampY,worldPosition.z);
+        
     }    
 
     private void LaunchBall()
@@ -87,9 +101,10 @@ public class BallHandler : MonoBehaviour
         currentBallSpringJoint = ballInstance.GetComponent<SpringJoint2D>();
         currentBallSpringJoint.connectedBody = pivot;
 
-        Transform[] LeftLinePoints = { currentBallRb.transform, leftPivot };
-        Transform[] RightLinePoints = { currentBallRb.transform, rightPivot };
+        Transform[] LeftLinePoints = { ballInstance.transform, leftPivot };
+        Transform[] RightLinePoints = { ballInstance.transform, rightPivot };
 
+        if (LeftLinePoints == null || RightLinePoints == null) { return; }
         lrL.SetUpLine(LeftLinePoints);
         lrR.SetUpLine(RightLinePoints);
     }
